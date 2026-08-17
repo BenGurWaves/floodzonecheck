@@ -39,3 +39,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# cloudflare
+/.worker/
+.wrangler/
+
+# ai agent files
+AGENTS.md
+CLAUDE.md
+.open-next/

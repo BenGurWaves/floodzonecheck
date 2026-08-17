@@ -1,26 +1,55 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #FAF8F5;
+  --bg-alt: #F0EDE7;
+  --fg: #1A1F2E;
+  --fg-muted: #5C6370;
+  --accent: #C45D3E;
+  --accent-hover: #A84E34;
+  --border: #D4CFC7;
+  --zone-high: #B91C1C;
+  --zone-high-bg: #FEF2F2;
+  --zone-moderate: #D97706;
+  --zone-moderate-bg: #FFFBEB;
+  --zone-low: #047857;
+  --zone-low-bg: #ECFDF5;
+  --card: #FFFFFF;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-background: var(--bg);
+  --color-foreground: var(--fg);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-border: var(--border);
+  --color-bg-alt: var(--bg-alt);
+  --color-fg-muted: var(--fg-muted);
+  --color-card: var(--card);
+  --color-zone-high: var(--zone-high);
+  --color-zone-high-bg: var(--zone-high-bg);
+  --color-zone-moderate: var(--zone-moderate);
+  --color-zone-moderate-bg: var(--zone-moderate-bg);
+  --color-zone-low: var(--zone-low);
+  --color-zone-low-bg: var(--zone-low-bg);
+  --font-display: 'DM Serif Display', Georgia, serif;
+  --font-body: 'Inter', system-ui, sans-serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+}
+
+::selection {
+  background-color: var(--accent);
+  color: white;
+}
+
+input:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }

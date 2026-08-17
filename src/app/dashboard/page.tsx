@@ -1,0 +1,270 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { MapPin, Bell, Trash2, RefreshCw, LogOut } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import type { TrackedProperty, AlertEntry } from "@/lib/types";
+import { getZoneColor } from "@/lib/zone-utils";
+import AuthForm from "@/components/AuthForm";
+
+interface DashboardData {
+  properties: TrackedProperty[];
+  alerts: (AlertEntry & { tracked_properties: { user_id: string; address_label: string } })[];
+}
+
+function getInitialAuth(): { token: string } | null {
+  if (typeof window === "undefined") return null;
+  const stored = localStorage.getItem("fzc_token");
+  return stored ? { token: stored } : null;
+}
+
+export default function DashboardPage() {
+  const [auth] = useState<{ token: string } | null>(getInitialAuth);
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  const [rechecking, setRechecking] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!auth) {
+      setLoaded(true); // eslint-disable-line react-hooks/set-state-in-effect
+      return;
+    }
+
+    let cancelled = false;
+
+    async function fetchDashboard() {
+      try {
+        const res = await fetch("/api/dashboard", {
+          headers: { Authorization: `Bearer ${auth!.token}` },
+        });
+
+        if (res.status === 401) {
+          localStorage.removeItem("fzc_token");
+          return;
+        }
+
+        if (!cancelled) {
+          const result = await res.json();
+          setData(result);
+        }
+      } catch {
+        // silent fail
+      } finally {
+        if (!cancelled) setLoaded(true);
+      }
+    }
+
+    fetchDashboard();
+
+    return () => { cancelled = true; };
+  }, [auth]);
+
+  async function handleLogout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    localStorage.removeItem("fzc_token");
+    router.push("/");
+  }
+
+  async function handleRemove(propertyId: string) {
+    if (!auth) return;
+    if (!confirm("Remove this property from tracking?")) return;
+
+    await fetch("/api/track", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${auth.token}`,
+      },
+      body: JSON.stringify({ propertyId }),
+    });
+
+    const res = await fetch("/api/dashboard", {
+      headers: { Authorization: `Bearer ${auth.token}` },
+    });
+    if (res.ok) {
+      const result = await res.json();
+      setData(result);
+    }
+  }
+
+  async function handleRecheck() {
+    if (!auth) return;
+    setRechecking(true);
+    try {
+      const res = await fetch("/api/dashboard", {
+        headers: { Authorization: `Bearer ${auth.token}` },
+      });
+      if (res.ok) {
+        const result = await res.json();
+        setData(result);
+      }
+    } finally {
+      setRechecking(false);
+    }
+  }
+
+  if (!loaded) {
+    return (
+      <div className="max-w-7xl mx-auto px-5 md:px-8 py-16 text-center">
+        <div className="w-8 h-8 border-2 border-accent/30 border-t-accent rounded-full animate-spin mx-auto" />
+      </div>
+    );
+  }
+
+  if (!auth) {
+    return (
+      <div className="max-w-md mx-auto px-5 md:px-8 py-16">
+        <h1 className="font-display text-3xl text-foreground mb-2 text-center">Dashboard</h1>
+        <p className="text-sm text-fg-muted mb-8 text-center">
+          Sign in to view your tracked properties and alerts.
+        </p>
+
+        <div className="bg-card border border-border rounded-xl p-6 md:p-8">
+          <div className="space-y-6">
+            <div>
+              <h2 className="font-display text-xl text-foreground mb-1">Sign In</h2>
+              <p className="text-sm text-fg-muted">Access your tracked properties</p>
+            </div>
+            <AuthForm mode="login" />
+            <div className="text-center">
+              <p className="text-sm text-fg-muted">
+                No account?{" "}
+                <button
+                  onClick={() => {
+                    const form = document.querySelector("[data-auth-mode]") as HTMLElement;
+                    if (form) form.setAttribute("data-auth-mode", "signup");
+                  }}
+                  className="text-accent hover:text-accent-hover font-medium"
+                >
+                  Create one free
+                </button>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4 bg-card border border-border rounded-xl p-6">
+          <div className="text-center">
+            <h3 className="font-display text-lg text-foreground mb-1">New here?</h3>
+            <p className="text-sm text-fg-muted mb-4">Create a free account to start tracking properties</p>
+            <AuthForm mode="signup" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto px-5 md:px-8 py-12 md:py-16">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-10">
+        <div>
+          <h1 className="font-display text-3xl md:text-4xl text-foreground">My Tracked Properties</h1>
+          <p className="text-sm text-fg-muted mt-1">
+            Monitor your properties for FEMA flood zone changes
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleRecheck}
+            disabled={rechecking}
+            className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-lg text-sm font-medium text-foreground hover:bg-bg-alt transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 ${rechecking ? "animate-spin" : ""}`} />
+            Re-check All
+          </button>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-fg-muted hover:text-foreground transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+            Sign Out
+          </button>
+        </div>
+      </div>
+
+      {data && data.properties.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-12">
+          {data.properties.map((prop) => {
+            const colors = getZoneColor(prop.last_known_zone);
+            return (
+              <div key={prop.id} className="bg-card border border-border rounded-xl p-5">
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <MapPin className="w-4 h-4 text-fg-muted flex-shrink-0" />
+                    <span className="text-sm font-medium text-foreground truncate">{prop.address_label}</span>
+                  </div>
+                  <button
+                    onClick={() => handleRemove(prop.id)}
+                    className="text-fg-muted hover:text-zone-high transition-colors flex-shrink-0"
+                    aria-label="Remove property"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2 mb-2">
+                  <span className={`inline-flex items-center px-2.5 py-0.5 text-xs font-bold rounded-full ${colors.bg} ${colors.text}`}>
+                    Zone {prop.last_known_zone}
+                  </span>
+                </div>
+
+                <p className="text-xs text-fg-muted">
+                  Last checked {formatDistanceToNow(new Date(prop.last_checked), { addSuffix: true })}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {data && data.properties.length === 0 && (
+        <div className="bg-card border border-border rounded-xl p-12 text-center mb-12">
+          <MapPin className="w-10 h-10 text-fg-muted mx-auto mb-4" strokeWidth={1.5} />
+          <h3 className="font-display text-xl text-foreground mb-2">No Tracked Properties Yet</h3>
+          <p className="text-sm text-fg-muted mb-6 max-w-md mx-auto">
+            Search for an address on the home page, then click &quot;Track this property&quot; to start monitoring it for zone changes.
+          </p>
+          <button
+            onClick={() => router.push("/")}
+            className="px-6 py-3 bg-accent text-white rounded-lg font-semibold text-sm hover:bg-accent-hover transition-colors"
+          >
+            Look Up an Address
+          </button>
+        </div>
+      )}
+
+      {data && data.alerts.length > 0 && (
+        <div>
+          <div className="flex items-center gap-2 mb-6">
+            <Bell className="w-5 h-5 text-accent" />
+            <h2 className="font-display text-2xl text-foreground">Recent Alerts</h2>
+          </div>
+          <div className="space-y-3">
+            {data.alerts.map((alert) => (
+              <div
+                key={alert.id}
+                className="bg-card border border-border rounded-xl p-5 flex flex-col sm:flex-row sm:items-center gap-3"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">
+                    {alert.tracked_properties?.address_label}
+                  </p>
+                  <p className="text-xs text-fg-muted mt-0.5">
+                    Zone changed from{" "}
+                    <span className="font-semibold text-zone-high">{alert.old_zone}</span> to{" "}
+                    <span className="font-semibold text-zone-high">{alert.new_zone}</span>
+                  </p>
+                </div>
+                <span className="text-xs text-fg-muted whitespace-nowrap">
+                  {formatDistanceToNow(new Date(alert.sent_at), { addSuffix: true })}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
