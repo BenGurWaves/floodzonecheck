@@ -43,12 +43,14 @@ export async function POST(request: NextRequest) {
         .eq("id", userId);
     }
 
+    const STRIPE_PRICE_ID = "REPLACE_WITH_YOUR_STRIPE_PRICE_ID";
+
     const session = await getStripe().checkout.sessions.create({
       customer: customerId,
-      mode: "payment",
+      mode: "subscription",
       line_items: [
         {
-          price: process.env.STRIPE_PRICE_ID!,
+          price: STRIPE_PRICE_ID,
           quantity: 1,
         },
       ],

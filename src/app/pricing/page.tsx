@@ -5,7 +5,7 @@ import { SITE_URL } from "@/lib/constants";
 export const metadata: Metadata = {
   title: "Pricing — Free Flood Zone Lookup + Pro Monitoring",
   description:
-    "Unlimited flood zone searches are free. Upgrade to Pro for unlimited tracked properties, priority alerts, and downloadable PDF summaries. One-time payment.",
+    "Unlimited flood zone searches are free. Upgrade to Pro for unlimited tracked properties, priority alerts, and downloadable PDF summaries. $5.99/month or $49/year.",
   alternates: { canonical: `${SITE_URL}/pricing` },
   openGraph: {
     title: "Pricing — FloodZoneCheck",
@@ -35,6 +35,7 @@ export default function PricingPage() {
         <PricingCard
           name="Free"
           price="$0"
+          period=""
           description="Full research access with basic monitoring"
           features={[
             "Unlimited flood zone lookups",
@@ -49,7 +50,8 @@ export default function PricingPage() {
 
         <PricingCard
           name="Pro"
-          price="$49"
+          price="$5.99"
+          period="/month ($49/year)"
           description="For homeowners, buyers, and real estate professionals"
           features={[
             "Everything in Free",
@@ -87,11 +89,11 @@ export default function PricingPage() {
           </div>
 
           <div className="bg-card border border-border rounded-xl p-6">
-            <h3 className="font-semibold text-foreground mb-2">Is this a one-time payment?</h3>
+            <h3 className="font-semibold text-foreground mb-2">Can I cancel anytime?</h3>
             <p className="text-sm text-fg-muted leading-relaxed">
-              Yes. Pro is a one-time payment of $49 — no recurring charges, no subscription to
-              cancel. You get lifetime access to Pro features. Your tracked properties remain
-              saved and your monitoring continues as long as the service is active.
+              Yes. Cancel your Pro subscription from your billing dashboard (powered by Stripe)
+              at any time. You keep access until the end of your current billing period. Your
+              tracked properties remain saved — you just revert to the free tier limits.
             </p>
           </div>
 
