@@ -4,7 +4,6 @@ import Link from "next/link";
 interface Props {
   name: string;
   price: string;
-  period: string;
   description: string;
   features: string[];
   highlighted?: boolean;
@@ -12,7 +11,7 @@ interface Props {
   ctaHref: string;
 }
 
-export default function PricingCard({ name, price, period, description, features, highlighted, cta, ctaHref }: Props) {
+export default function PricingCard({ name, price, description, features, highlighted, cta, ctaHref }: Props) {
   return (
     <div
       className={`relative rounded-xl p-6 md:p-8 ${
@@ -36,11 +35,6 @@ export default function PricingCard({ name, price, period, description, features
 
       <div className="mb-6">
         <span className="font-display text-4xl">{price}</span>
-        {period && (
-          <span className={`text-sm ml-1 ${highlighted ? "text-[#9CA3AF]" : "text-fg-muted"}`}>
-            {period}
-          </span>
-        )}
       </div>
 
       <ul className="space-y-3 mb-8">
