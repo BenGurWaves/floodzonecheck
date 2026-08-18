@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import PricingCard from "@/components/PricingCard";
 import { SITE_URL } from "@/lib/constants";
+import PricingCards from "@/components/PricingCards";
 
 export const metadata: Metadata = {
   title: "Pricing — Free Flood Zone Lookup + Pro Monitoring",
@@ -31,40 +31,7 @@ export default function PricingPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-        <PricingCard
-          name="Free"
-          price="$0"
-          period=""
-          description="Full research access with basic monitoring"
-          features={[
-            "Unlimited flood zone lookups",
-            "3 tracked properties",
-            "Zone change alerts via email",
-            "FEMA panel reference links",
-            "All flood zone definitions",
-          ]}
-          cta="Get Started Free"
-          ctaHref="/"
-        />
-
-        <PricingCard
-          name="Pro"
-          price="$5.99"
-          period="/month ($49/year)"
-          description="For homeowners, buyers, and real estate professionals"
-          features={[
-            "Everything in Free",
-            "Unlimited tracked properties",
-            "Priority alerts (faster re-check cycle)",
-            "Downloadable PDF summary per property",
-            "Useful for home-buying due diligence files",
-          ]}
-          highlighted
-          cta="Upgrade to Pro"
-          ctaHref="#stripe-checkout"
-        />
-      </div>
+      <PricingCards />
 
       <div className="mt-16 max-w-2xl mx-auto">
         <h2 className="font-display text-2xl text-foreground mb-6 text-center">Frequently Asked Questions</h2>

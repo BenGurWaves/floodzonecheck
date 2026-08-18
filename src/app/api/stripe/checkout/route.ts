@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { getStripe } from "@/lib/stripe";
+import { getStripe, getOrCreateStripePrices } from "@/lib/stripe";
 import { createServerClient } from "@/lib/supabase-server";
 import { SITE_URL } from "@/lib/constants";
 
@@ -19,6 +19,9 @@ export async function POST(request: NextRequest) {
     if (!userId) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const body = await request.json().catch(() => ({}));
+    const interval = body.interval === "year" ? "year" : "month";
 
     const supabase = createServerClient();
 
@@ -43,14 +46,15 @@ export async function POST(request: NextRequest) {
         .eq("id", userId);
     }
 
-    const STRIPE_PRICE_ID = "REPLACE_WITH_YOUR_STRIPE_PRICE_ID";
+    const prices = await getOrCreateStripePrices();
+    const priceId = interval === "year" ? prices.yearlyPriceId : prices.monthlyPriceId;
 
     const session = await getStripe().checkout.sessions.create({
       customer: customerId,
       mode: "subscription",
       line_items: [
         {
-          price: STRIPE_PRICE_ID,
+          price: priceId,
           quantity: 1,
         },
       ],

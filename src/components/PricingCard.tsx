@@ -1,5 +1,6 @@
 import { Check } from "lucide-react";
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 interface Props {
   name: string;
@@ -10,9 +11,10 @@ interface Props {
   highlighted?: boolean;
   cta: string;
   ctaHref: string;
+  ctaButton?: ReactNode;
 }
 
-export default function PricingCard({ name, price, period, description, features, highlighted, cta, ctaHref }: Props) {
+export default function PricingCard({ name, price, period, description, features, highlighted, cta, ctaHref, ctaButton }: Props) {
   return (
     <div
       className={`relative rounded-xl p-6 md:p-8 ${
@@ -52,30 +54,32 @@ export default function PricingCard({ name, price, period, description, features
         ))}
       </ul>
 
-      {ctaHref.startsWith("http") ? (
-        <a
-          href={ctaHref}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={`block text-center py-3 px-6 rounded-lg font-semibold text-sm transition-colors ${
-            highlighted
-              ? "bg-accent text-white hover:bg-accent-hover"
-              : "bg-foreground text-white hover:bg-[#2A3040]"
-          }`}
-        >
-          {cta}
-        </a>
-      ) : (
-        <Link
-          href={ctaHref}
-          className={`block text-center py-3 px-6 rounded-lg font-semibold text-sm transition-colors ${
-            highlighted
-              ? "bg-accent text-white hover:bg-accent-hover"
-              : "bg-foreground text-white hover:bg-[#2A3040]"
-          }`}
-        >
-          {cta}
-        </Link>
+      {ctaButton || (
+        ctaHref.startsWith("http") ? (
+          <a
+            href={ctaHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`block text-center py-3 px-6 rounded-lg font-semibold text-sm transition-colors ${
+              highlighted
+                ? "bg-accent text-white hover:bg-accent-hover"
+                : "bg-foreground text-white hover:bg-[#2A3040]"
+            }`}
+          >
+            {cta}
+          </a>
+        ) : (
+          <Link
+            href={ctaHref}
+            className={`block text-center py-3 px-6 rounded-lg font-semibold text-sm transition-colors ${
+              highlighted
+                ? "bg-accent text-white hover:bg-accent-hover"
+                : "bg-foreground text-white hover:bg-[#2A3040]"
+            }`}
+          >
+            {cta}
+          </Link>
+        )
       )}
     </div>
   );
