@@ -9,6 +9,7 @@ import { getZoneColor } from "@/lib/zone-utils";
 import AuthForm from "@/components/AuthForm";
 
 interface DashboardData {
+  isPro: boolean;
   properties: TrackedProperty[];
   alerts: (AlertEntry & { tracked_properties: { user_id: string; address_label: string } })[];
 }
@@ -160,9 +161,17 @@ export default function DashboardPage() {
     <div className="max-w-7xl mx-auto px-5 md:px-8 py-12 md:py-16">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-10">
         <div>
-          <h1 className="font-display text-3xl md:text-4xl text-foreground">My Tracked Properties</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="font-display text-3xl md:text-4xl text-foreground">My Tracked Properties</h1>
+            {data?.isPro ? (
+              <span className="px-3 py-1 bg-accent text-white text-xs font-bold rounded-full uppercase">Pro</span>
+            ) : (
+              <span className="px-3 py-1 bg-card border border-border text-fg-muted text-xs font-bold rounded-full uppercase">Free</span>
+            )}
+          </div>
           <p className="text-sm text-fg-muted mt-1">
             Monitor your properties for FEMA flood zone changes
+            {!data?.isPro && data && ` — ${data.properties.length}/3 properties tracked`}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -232,6 +241,21 @@ export default function DashboardPage() {
           >
             Look Up an Address
           </button>
+        </div>
+      )}
+
+      {data && !data.isPro && data.properties.length >= 3 && (
+        <div className="bg-foreground border-2 border-accent rounded-xl p-6 mb-12 text-center">
+          <h3 className="font-display text-lg text-white mb-2">You&apos;ve reached the free limit</h3>
+          <p className="text-sm text-[#9CA3AF] mb-4">
+            Free accounts can track up to 3 properties. Upgrade to Pro for unlimited tracking.
+          </p>
+          <a
+            href="/pricing"
+            className="inline-block px-6 py-2.5 bg-accent text-white rounded-lg font-semibold text-sm hover:bg-accent-hover transition-colors"
+          >
+            Upgrade to Pro
+          </a>
         </div>
       )}
 

@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { createServerClient } from "@/lib/supabase-server";
+import { getStripe } from "@/lib/stripe";
 
 async function getUserId(request: NextRequest): Promise<string | null> {
   const supabase = createServerClient();
@@ -9,6 +10,23 @@ async function getUserId(request: NextRequest): Promise<string | null> {
   const token = authHeader.split(" ")[1];
   const { data } = await supabase.auth.getUser(token);
   return data.user?.id || null;
+}
+
+async function isProUser(supabase: ReturnType<typeof createServerClient>, userId: string): Promise<boolean> {
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("stripe_customer_id")
+    .eq("id", userId)
+    .single();
+
+  if (!profile?.stripe_customer_id) return false;
+
+  const subscriptions = await getStripe().subscriptions.list({
+    customer: profile.stripe_customer_id,
+    status: "active",
+    limit: 1,
+  });
+  return subscriptions.data.length > 0;
 }
 
 export async function POST(request: NextRequest) {
@@ -31,13 +49,9 @@ export async function POST(request: NextRequest) {
       .select("id", { count: "exact", head: true })
       .eq("user_id", userId);
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("is_paid")
-      .eq("id", userId)
-      .single();
+    const pro = await isProUser(supabase, userId);
 
-    if (!profile?.is_paid && (count || 0) >= 3) {
+    if (!pro && (count || 0) >= 3) {
       return Response.json(
         { error: "Free tier allows up to 3 tracked properties. Upgrade to track unlimited." },
         { status: 403 }

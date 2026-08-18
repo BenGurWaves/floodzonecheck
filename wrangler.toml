@@ -7,3 +7,8 @@ compatibility_flags = ["nodejs_compat"]
 directory = ".open-next/assets"
 binding = "ASSETS"
 run_worker_first = true
+
+[vars]
+NEXT_PUBLIC_SUPABASE_URL = "https://ppihdyxsegcllrsscbnt.supabase.co"
+NEXT_PUBLIC_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBwaWhkeXhzZWdjbGxyc3NjYm50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzQyMTcsImV4cCI6MjA5MDA1MDIxN30.OemEJGqC96iIQbNAwbWDdRreZpW6iHzt00U9PsD-wMY"
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = "pk_live_51T7K1LPRyQBaeqcXwtSFQvZ7QLGKaUUpWRc1pUPhcSl0EoTscOdVdb7G6OTkf156Zh6OQxZpRS4ndjs3YLmLM3wJ005bMDFbVI"

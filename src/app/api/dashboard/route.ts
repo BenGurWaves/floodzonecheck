@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { createServerClient } from "@/lib/supabase-server";
+import { getStripe } from "@/lib/stripe";
 
 async function getUserId(request: NextRequest): Promise<string | null> {
   const supabase = createServerClient();
@@ -20,6 +21,23 @@ export async function GET(request: NextRequest) {
 
     const supabase = createServerClient();
 
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("stripe_customer_id")
+      .eq("id", userId)
+      .single();
+
+    let isPro = false;
+
+    if (profile?.stripe_customer_id) {
+      const subscriptions = await getStripe().subscriptions.list({
+        customer: profile.stripe_customer_id,
+        status: "active",
+        limit: 1,
+      });
+      isPro = subscriptions.data.length > 0;
+    }
+
     const { data: properties } = await supabase
       .from("tracked_properties")
       .select("*")
@@ -34,6 +52,7 @@ export async function GET(request: NextRequest) {
       .limit(20);
 
     return Response.json({
+      isPro,
       properties: properties || [],
       alerts: alerts || [],
     });
