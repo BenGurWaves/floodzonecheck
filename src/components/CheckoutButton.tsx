@@ -10,9 +10,11 @@ interface Props {
 
 export default function CheckoutButton({ interval, highlighted }: Props) {
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleCheckout() {
     setLoading(true);
+    setError(null);
     try {
       const supabase = getSupabase();
       const { data: { session } } = await supabase.auth.getSession();
@@ -32,27 +34,38 @@ export default function CheckoutButton({ interval, highlighted }: Props) {
       });
 
       const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Something went wrong. Please try again.");
+        return;
+      }
+
       if (data.url) {
         window.location.href = data.url;
       }
     } catch {
-      // silent
+      setError("Network error. Please try again.");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <button
-      onClick={handleCheckout}
-      disabled={loading}
-      className={`block w-full text-center py-3 px-6 rounded-lg font-semibold text-sm transition-colors ${
-        highlighted
-          ? "bg-accent text-white hover:bg-accent-hover"
-          : "bg-foreground text-white hover:bg-[#2A3040]"
-      } disabled:opacity-50`}
-    >
-      {loading ? "Redirecting..." : "Upgrade to Pro"}
-    </button>
+    <div>
+      <button
+        onClick={handleCheckout}
+        disabled={loading}
+        className={`block w-full text-center py-3 px-6 rounded-lg font-semibold text-sm transition-colors ${
+          highlighted
+            ? "bg-accent text-white hover:bg-accent-hover"
+            : "bg-foreground text-white hover:bg-[#2A3040]"
+        } disabled:opacity-50`}
+      >
+        {loading ? "Redirecting to Stripe..." : "Upgrade to Pro"}
+      </button>
+      {error && (
+        <p className="mt-2 text-xs text-center text-red-400">{error}</p>
+      )}
+    </div>
   );
 }
