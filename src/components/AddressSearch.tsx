@@ -78,7 +78,7 @@ export default function AddressSearch() {
 
       {result && (
         <div className="mt-6">
-          <ZoneResult result={result} address={address} />
+          <ZoneResult result={result} address={address} matchedAddress={result.matchedAddress} />
         </div>
       )}
     </div>

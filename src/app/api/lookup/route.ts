@@ -16,6 +16,8 @@ export async function POST(request: NextRequest) {
     return Response.json({
       ...zoneResult,
       matchedAddress: geocode.matchedAddress,
+      lat: geocode.lat,
+      lng: geocode.lng,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "An unexpected error occurred.";

@@ -48,3 +48,9 @@ next-env.d.ts
 AGENTS.md
 CLAUDE.md
 .open-next/
+.env.local
+
+# Supabase local dev
+supabase/config.toml
+supabase/migrations/
+supabase/.gitignore

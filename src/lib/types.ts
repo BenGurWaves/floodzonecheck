@@ -8,6 +8,9 @@ export interface FloodZoneResult {
   description: string;
   insuranceRequired: boolean;
   rawZone: string;
+  matchedAddress?: string;
+  lat?: number;
+  lng?: number;
 }
 
 export interface GeocodeResult {
@@ -47,5 +50,5 @@ export interface CachedZone {
 export interface UserProfile {
   id: string;
   email: string;
-  is_paid: boolean;
+  tier: string;
 }

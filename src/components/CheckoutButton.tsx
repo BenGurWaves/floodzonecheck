@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { getSupabase } from "@/lib/supabase";
 
 interface Props {
   interval: "month" | "year";
@@ -16,10 +15,9 @@ export default function CheckoutButton({ interval, highlighted }: Props) {
     setLoading(true);
     setError(null);
     try {
-      const supabase = getSupabase();
-      const { data: { session } } = await supabase.auth.getSession();
+      const token = localStorage.getItem("fzc_token");
 
-      if (!session?.access_token) {
+      if (!token) {
         window.location.href = "/dashboard";
         return;
       }
@@ -28,7 +26,7 @@ export default function CheckoutButton({ interval, highlighted }: Props) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ interval }),
       });

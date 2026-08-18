@@ -54,7 +54,7 @@ export default function PricingCards() {
             ))}
           </ul>
           <Link
-            href="/"
+            href="/dashboard"
             className="block text-center py-3 px-6 rounded-lg font-semibold text-sm transition-colors bg-foreground text-white hover:bg-[#2A3040]"
           >
             Get Started Free

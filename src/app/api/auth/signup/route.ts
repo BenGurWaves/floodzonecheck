@@ -31,10 +31,24 @@ export async function POST(request: NextRequest) {
     await supabase.from("profiles").insert({
       id: data.user.id,
       email: data.user.email,
-      is_paid: false,
     });
 
-    return Response.json({ user: { id: data.user.id, email: data.user.email } });
+    const { data: session, error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (signInError) {
+      return Response.json({ user: { id: data.user.id, email: data.user.email } });
+    }
+
+    return Response.json({
+      user: { id: data.user.id, email: data.user.email },
+      session: {
+        access_token: session.session.access_token,
+        refresh_token: session.session.refresh_token,
+      },
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to create account.";
     return Response.json({ error: message }, { status: 500 });

@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { MapPin, Bell, Trash2, RefreshCw, LogOut } from "lucide-react";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { MapPin, Bell, Trash2, RefreshCw, LogOut, ExternalLink } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import type { TrackedProperty, AlertEntry } from "@/lib/types";
 import { getZoneColor } from "@/lib/zone-utils";
@@ -20,12 +20,22 @@ function getInitialAuth(): { token: string } | null {
   return stored ? { token: stored } : null;
 }
 
-export default function DashboardPage() {
-  const [auth] = useState<{ token: string } | null>(getInitialAuth);
+function DashboardInner() {
+  const [auth, setAuth] = useState<{ token: string } | null>(getInitialAuth);
   const [data, setData] = useState<DashboardData | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [rechecking, setRechecking] = useState(false);
+  const [showUpgraded, setShowUpgraded] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "signup">("login");
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get("upgraded") === "true") {
+      setShowUpgraded(true);
+      router.replace("/dashboard");
+    }
+  }, [searchParams, router]);
 
   useEffect(() => {
     if (!auth) {
@@ -43,6 +53,7 @@ export default function DashboardPage() {
 
         if (res.status === 401) {
           localStorage.removeItem("fzc_token");
+          setAuth(null);
           return;
         }
 
@@ -65,6 +76,8 @@ export default function DashboardPage() {
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
     localStorage.removeItem("fzc_token");
+    setAuth(null);
+    setData(null);
     router.push("/");
   }
 
@@ -106,6 +119,32 @@ export default function DashboardPage() {
     }
   }
 
+  async function handleManageSubscription() {
+    if (!auth) return;
+    try {
+      const res = await fetch("/api/stripe/portal", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${auth.token}`,
+        },
+      });
+      const result = await res.json();
+      if (result.url) {
+        window.location.href = result.url;
+      }
+    } catch {
+      // silent fail
+    }
+  }
+
+  function handleAuthSuccess() {
+    const token = localStorage.getItem("fzc_token");
+    if (token) {
+      setAuth({ token });
+    }
+  }
+
   if (!loaded) {
     return (
       <div className="max-w-7xl mx-auto px-5 md:px-8 py-16 text-center">
@@ -123,35 +162,29 @@ export default function DashboardPage() {
         </p>
 
         <div className="bg-card border border-border rounded-xl p-6 md:p-8">
-          <div className="space-y-6">
-            <div>
-              <h2 className="font-display text-xl text-foreground mb-1">Sign In</h2>
-              <p className="text-sm text-fg-muted">Access your tracked properties</p>
-            </div>
-            <AuthForm mode="login" />
-            <div className="text-center">
-              <p className="text-sm text-fg-muted">
-                No account?{" "}
-                <button
-                  onClick={() => {
-                    const form = document.querySelector("[data-auth-mode]") as HTMLElement;
-                    if (form) form.setAttribute("data-auth-mode", "signup");
-                  }}
-                  className="text-accent hover:text-accent-hover font-medium"
-                >
-                  Create one free
-                </button>
-              </p>
-            </div>
+          <div className="mb-6 flex gap-2">
+            <button
+              onClick={() => setAuthMode("login")}
+              className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${
+                authMode === "login"
+                  ? "bg-accent text-white"
+                  : "bg-bg text-fg-muted hover:text-foreground"
+              }`}
+            >
+              Sign In
+            </button>
+            <button
+              onClick={() => setAuthMode("signup")}
+              className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${
+                authMode === "signup"
+                  ? "bg-accent text-white"
+                  : "bg-bg text-fg-muted hover:text-foreground"
+              }`}
+            >
+              Create Account
+            </button>
           </div>
-        </div>
-
-        <div className="mt-4 bg-card border border-border rounded-xl p-6">
-          <div className="text-center">
-            <h3 className="font-display text-lg text-foreground mb-1">New here?</h3>
-            <p className="text-sm text-fg-muted mb-4">Create a free account to start tracking properties</p>
-            <AuthForm mode="signup" />
-          </div>
+          <AuthForm mode={authMode} onSuccess={handleAuthSuccess} />
         </div>
       </div>
     );
@@ -159,6 +192,21 @@ export default function DashboardPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-5 md:px-8 py-12 md:py-16">
+      {showUpgraded && (
+        <div className="mb-8 p-4 bg-zone-low-bg border border-zone-low/20 rounded-xl flex items-center justify-between">
+          <div>
+            <p className="text-sm font-semibold text-foreground">Welcome to Pro!</p>
+            <p className="text-xs text-fg-muted">You now have unlimited tracking and priority alerts.</p>
+          </div>
+          <button
+            onClick={() => setShowUpgraded(false)}
+            className="text-fg-muted hover:text-foreground text-xs"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-10">
         <div>
           <div className="flex items-center gap-3">
@@ -175,13 +223,29 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          {data?.isPro ? (
+            <button
+              onClick={handleManageSubscription}
+              className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-lg text-sm font-medium text-foreground hover:bg-bg-alt transition-colors"
+            >
+              <ExternalLink className="w-4 h-4" />
+              Manage Subscription
+            </button>
+          ) : (
+            <a
+              href="/pricing"
+              className="flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-lg text-sm font-semibold hover:bg-accent-hover transition-colors"
+            >
+              Upgrade to Pro
+            </a>
+          )}
           <button
             onClick={handleRecheck}
             disabled={rechecking}
             className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-lg text-sm font-medium text-foreground hover:bg-bg-alt transition-colors disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 ${rechecking ? "animate-spin" : ""}`} />
-            Re-check All
+            Refresh
           </button>
           <button
             onClick={handleLogout}
@@ -233,7 +297,7 @@ export default function DashboardPage() {
           <MapPin className="w-10 h-10 text-fg-muted mx-auto mb-4" strokeWidth={1.5} />
           <h3 className="font-display text-xl text-foreground mb-2">No Tracked Properties Yet</h3>
           <p className="text-sm text-fg-muted mb-6 max-w-md mx-auto">
-            Search for an address on the home page, then click &quot;Track this property&quot; to start monitoring it for zone changes.
+            Search for an address on the home page, then click &quot;Track This Property&quot; to start monitoring it for zone changes.
           </p>
           <button
             onClick={() => router.push("/")}
@@ -290,5 +354,19 @@ export default function DashboardPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="max-w-7xl mx-auto px-5 md:px-8 py-16 text-center">
+          <div className="w-8 h-8 border-2 border-accent/30 border-t-accent rounded-full animate-spin mx-auto" />
+        </div>
+      }
+    >
+      <DashboardInner />
+    </Suspense>
   );
 }
